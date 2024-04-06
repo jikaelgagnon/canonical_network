@@ -9,14 +9,14 @@ from canonical_network.models.euclideangraph_model import NBODY_HYPERPARAMS, Euc
 from canonical_network.models.euclideangraph_base_models import EGNN_vel, GNN, VNDeepSets, Transformer
 
 # Change model here
-HYPERPARAMS = {"model": "Transformer", 
+HYPERPARAMS = {"model": "GNN", 
                "canon_model_type": "vndeepsets", 
-               "pred_model_type": "Transformer", 
+               "pred_model_type": "GNN", 
                "batch_size": 100, 
                "dryrun": False, 
                "use_wandb": False, 
                "checkpoint": False, 
-               "num_epochs": 1000, 
+               "num_epochs": 10000, 
                "num_workers":0, 
                "auto_tune":False, 
                "seed": 0}
@@ -59,12 +59,12 @@ def train_nbody():
              }[nbody_hypeyparams.model]()
 
     if nbody_hypeyparams.auto_tune:
-        trainer = pl.Trainer(fast_dev_run=nbody_hypeyparams.dryrun, max_epochs=nbody_hypeyparams.num_epochs, accelerator="auto", auto_scale_batch_size=True, auto_lr_find=True, logger=wandb_logger, callbacks=callbacks, deterministic=False)
+        trainer = pl.Trainer(fast_dev_run=nbody_hypeyparams.dryrun, max_epochs=nbody_hypeyparams.num_epochs, accelerator="auto", auto_scale_batch_size=True, auto_lr_find=True, logger=wandb_logger, callbacks=callbacks, deterministic=False, log_every_n_steps=30)
         trainer.tune(model, datamodule=nbody_data, enable_checkpointing=nbody_hypeyparams.checkpoint)
     elif nbody_hypeyparams.dryrun:
-        trainer = pl.Trainer(fast_dev_run=False, max_epochs=2, accelerator="auto", limit_train_batches=10, limit_val_batches=10, logger=wandb_logger, callbacks=callbacks, deterministic=False, enable_checkpointing=nbody_hypeyparams.checkpoint)
+        trainer = pl.Trainer(fast_dev_run=False, max_epochs=2, accelerator="auto", limit_train_batches=10, limit_val_batches=10, logger=wandb_logger, callbacks=callbacks, deterministic=False, enable_checkpointing=nbody_hypeyparams.checkpoint, log_every_n_steps=30)
     else:
-        trainer = pl.Trainer(fast_dev_run=nbody_hypeyparams.dryrun, max_epochs=nbody_hypeyparams.num_epochs, accelerator="auto", logger=wandb_logger, callbacks=callbacks, deterministic=False, enable_checkpointing=nbody_hypeyparams.checkpoint)
+        trainer = pl.Trainer(fast_dev_run=nbody_hypeyparams.dryrun, max_epochs=nbody_hypeyparams.num_epochs, accelerator="auto", logger=wandb_logger, callbacks=callbacks, deterministic=False, enable_checkpointing=nbody_hypeyparams.checkpoint, log_every_n_steps=30)
 
     trainer.fit(model, datamodule=nbody_data)
 

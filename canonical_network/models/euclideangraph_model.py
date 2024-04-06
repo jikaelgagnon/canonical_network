@@ -12,15 +12,15 @@ from canonical_network.utils import define_hyperparams, dict_to_object
 
 # Input dim is 6 because location and velocity vectors are concatenated.
 NBODY_HYPERPARAMS = {
-    "learning_rate": 1e-4, #1e-3
+    "learning_rate": 1e-3, #1e-3
     "weight_decay": 1e-12,
     "patience": 1000,
-    "hidden_dim": 32, #32
+    "hidden_dim": 64, #32
     "input_dim": 6,
     "in_node_nf": 1,
     "in_edge_nf": 2,
-    "num_layers": 2, #4
-    "out_dim": 1,
+    "num_layers": 4, #4
+    "out_dim": 4,
     "canon_num_layers": 4,
     "canon_hidden_dim": 16,
     "canon_layer_pooling": "mean",
@@ -35,7 +35,7 @@ NBODY_HYPERPARAMS = {
     "final_pooling": "mean",
     "nonlinearity": "relu",
     "angular_feature": "pv",
-    "dropout": 0.5, #0
+    "dropout": 0, #0
     "nheads": 8,
     "ff_hidden": 32
 }
@@ -181,11 +181,14 @@ class EuclideanGraphModel(BaseEuclideangraphModel):
         """
         # Rotation and translation vectors from eqn (10) in https://arxiv.org/pdf/2211.06489.pdf. 
         # Shapes: (n_nodes * batch_size) x 3 x 3 and (n_nodes * batch_size) x 3
+        # ie. One rotation matrix and one translation vector for each node.
+        # QUESTION: IS ROTATION MATRIX THE SAME FOR ALL NODES IN A BATCH?
         rotation_matrix, translation_vectors = self.canon_function(nodes, loc, edges, vel, edge_attr, charges)
         rotation_matrix_inverse = rotation_matrix.transpose(1, 2) # Inverse of a rotation matrix is its transpose.
 
         # Canonicalizes coordinates by rotating node coordinates and translation vectors by inverse rotation. 
         # Shape: (n_nodes * batch_size) x coord_dim. 
+        # loc[:,None, :] adds a dimension to loc, so that it can be multiplied with rotation_matrix_inverse. (n_nodes * batch_size) x 1 x 3
         canonical_loc = (
             torch.bmm(loc[:, None, :], rotation_matrix_inverse).squeeze()
             - torch.bmm(translation_vectors[:, None, :], rotation_matrix_inverse).squeeze()

@@ -350,18 +350,19 @@ class VNDeepSets(BaseEuclideangraphModel):
             features = torch.stack([canonical_loc, vel, angular, canonical_loc * charges], dim=2)
 
         x, _ = self.first_set_layer(features, edges)
-        x, _ = self.set_layers(x, edges)
+        x, _ = self.set_layers(x, edges) # n_nodes*batch_size x 3 x 16
 
         if self.prediction_mode:
             output = self.output_layer(x)
             output = output.squeeze()
             return output
+        # Run this when being used as conicalizer
         else:
-            x = ts.scatter(x, batch_indices, 0, reduce=self.final_pooling)
-        output = self.output_layer(x)
+            x = ts.scatter(x, batch_indices, 0, reduce=self.final_pooling) # batch_size x 3 x 16
+        output = self.output_layer(x) # 100 x 3 x 4
 
-        output = output.repeat(5, 1, 1, 1).transpose(0, 1)
-        output = output.reshape(-1, 3, 4)
+        output = output.repeat(5, 1, 1, 1).transpose(0, 1) # batch_size x (n_nodes) x 3 x 16
+        output = output.reshape(-1, 3, 4) # (batch_size * n_nodes) x 3 x 4
 
         rotation_vectors = output[:, :, :3]
         translation_vectors = output[:, :, 3:] if self.canon_translation else 0.0
@@ -473,16 +474,18 @@ class PositionalEncoding(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
         self.hidden_dim = hidden_dim
         div_term = torch.exp(torch.arange(0, hidden_dim, 2) * (-math.log(10000.0) / hidden_dim)).view(1,1, int(hidden_dim / 2)) # 1 x 1 x (hidden_dim / 2)
-        self.register_buffer('div_term', div_term)
+        self.register_buffer('div_term', div_term) # puts div_term on GPU
 
     def forward(self, x):
         """
         Returns positional encoding of coordinates and velocities.
         Args:
             `x`: Concatenated velocity and coordinate vectors. Shape: (n_nodes * batch_size x 6 x 1)
+        Output:
+            `pe`: Positional encoding of x. Shape: (n_nodes * batch_size x 6 x 32)
         """
         pe = torch.zeros(x.shape[0],x.shape[1], self.hidden_dim).to(x.device) # (n_nodes * batch_size) x 6 x 32
-        sin_terms = torch.sin(x * self.div_term) 
+        sin_terms = torch.sin(x * self.div_term) # (n_nodes * batch_size) x 6 x 1
         pe[:, :,0::2] = sin_terms
-        pe[:, :,1::2] = torch.cos(x * self.div_term) 
+        pe[:, :,1::2] = torch.cos(x * self.div_term) # there is an encoding for each dimension (ie. embedding for x, y, z, vx, vy, vz)
         return self.dropout(pe)
