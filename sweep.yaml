@@ -1,21 +1,12 @@
+program: /home/jikael/mcgill/comp396/canonical_network/canonical_network/canonical_network/train_nbody.py
 entity: symmetry_group
-project: canonical_network-nbody
-name: va_baseline_predictions_seed
-program: canonical_network/train_nbody.py
 method: bayes
 metric:
-  name: valid/loss.min
   goal: minimize
+  name: valid/loss.min
+name: Transformer Optimization 3
 parameters:
-  num_layers:
-    values: [2,4]
-  hidden_dim:
-    values: [32,64,128]
   learning_rate:
-    values: [1e-3, 5e-3]
-  patience:
-    values: [50, 200, 500]
-  #  dropout:
-  #    values: [0.0, 0.25, 0.5]
-  # seed:
-  #   values: [0, 1, 2, 3]
+    distribution: log_uniform_values
+    min: 1e-4
+    max: 1e-3

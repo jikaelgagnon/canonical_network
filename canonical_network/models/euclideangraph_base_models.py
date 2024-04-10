@@ -109,7 +109,7 @@ class BaseEuclideangraphModel(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate, weight_decay=1e-12)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
             optimizer, patience=self.patience, factor=0.5, min_lr=1e-6, mode="max"
         )
@@ -418,17 +418,18 @@ class VNDeepSetLayer(nn.Module):
 class Transformer(BaseEuclideangraphModel):
     def __init__(self, hyperparams):
         super(Transformer, self).__init__(hyperparams)
-        print(hyperparams)
         self.model = "Transformer"
         self.hidden_dim =  hyperparams.hidden_dim #32
         self.input_dim = hyperparams.input_dim #6
         self.n_layers = hyperparams.num_layers #4
         self.ff_hidden = hyperparams.ff_hidden
         self.act_fn = nn.ReLU()
-        self.dropout = 0
+        self.dropout = hyperparams.dropout
         self.nhead = hyperparams.nheads
 
-        self.pos_encoder = PositionalEncoding(hidden_dim=self.hidden_dim, dropout=self.dropout)
+        self.coord_embedding = nn.Linear(1, self.hidden_dim)
+
+        # self.pos_encoder = PositionalEncoding(hidden_dim=self.hidden_dim, dropout=self.dropout)
 
         self.charge_embedding = nn.Embedding(2,self.hidden_dim)
 
@@ -455,7 +456,9 @@ class Transformer(BaseEuclideangraphModel):
         """
         # Positional encodings
         pos_encodings = torch.cat([loc,vel], dim = 1).unsqueeze(2) # n_nodes*batch x 6 x 1
-        pos_encodings = self.pos_encoder(pos_encodings) # n_nodes*batch x 6 x hidden_dim
+        pos_encodings = self.coord_embedding(pos_encodings) #+ self.coord_embedding(pos_encodings)# n_nodes*batch x 6 x hidden_dim
+
+        # pos_encodings = self.pos_encoder(pos_encodings) #+ self.coord_embedding(pos_encodings)# n_nodes*batch x 6 x hidden_dim
         # Charge embeddings
         charges[charges == -1] = 0 # to work with nn.Embedding
         charges = charges.long()

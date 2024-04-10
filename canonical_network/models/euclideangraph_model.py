@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 from pytorch3d.transforms import RotateAxisAngle, Rotate, random_rotations
+from pytorch3d.transforms import RotateAxisAngle, Rotate, random_rotations
 import torchmetrics.functional as tmf
 import wandb
 
@@ -13,20 +14,20 @@ from canonical_network.utils import define_hyperparams, dict_to_object
 # Input dim is 6 because location and velocity vectors are concatenated.
 NBODY_HYPERPARAMS = {
     "learning_rate": 1e-3, #1e-3
-    "weight_decay": 1e-12,
-    "patience": 1000,
-    "hidden_dim": 64, #32
+    "weight_decay": 1e-8,
+    "patience": 1000, #1000
+    "hidden_dim": 8, #32
     "input_dim": 6,
     "in_node_nf": 1,
     "in_edge_nf": 2,
     "num_layers": 4, #4
     "out_dim": 4,
-    "canon_num_layers": 4,
-    "canon_hidden_dim": 16,
+    "canon_num_layers": 2,
+    "canon_hidden_dim": 32,
     "canon_layer_pooling": "mean",
     "canon_final_pooling": "mean",
     "canon_nonlinearity": "relu",
-    "canon_feature": "p",
+    "canon_feature": "pv",
     "canon_translation": False,
     "canon_angular_feature": 0,
     "canon_dropout": 0.5,
@@ -35,9 +36,9 @@ NBODY_HYPERPARAMS = {
     "final_pooling": "mean",
     "nonlinearity": "relu",
     "angular_feature": "pv",
-    "dropout": 0, #0
+    "dropout": 0.5, #0
     "nheads": 8,
-    "ff_hidden": 32
+    "ff_hidden": 128,
 }
 
 class EuclideangraphCanonFunction(pl.LightningModule):
@@ -134,6 +135,9 @@ class EuclideangraphPredFunction(pl.LightningModule):
         self.input_dim = hyperparams.input_dim
         self.in_node_nf = hyperparams.in_node_nf
         self.in_edge_nf = hyperparams.in_edge_nf
+        self.ff_hidden = hyperparams.ff_hidden
+        self.nheads = hyperparams.nheads
+        self.dropout = hyperparams.dropout
 
         model_hyperparams = {
             "num_layers": self.num_layers,
@@ -141,6 +145,9 @@ class EuclideangraphPredFunction(pl.LightningModule):
             "input_dim": self.input_dim,
             "in_node_nf": self.in_node_nf,
             "in_edge_nf": self.in_edge_nf,
+            "ff_hidden": self.ff_hidden,
+            "nheads": self.nheads,
+            "dropout": self.dropout,
         }
 
         self.model = {
