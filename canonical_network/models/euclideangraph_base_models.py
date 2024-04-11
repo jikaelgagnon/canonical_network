@@ -429,7 +429,7 @@ class Transformer(BaseEuclideangraphModel):
 
         self.coord_embedding = nn.Linear(1, self.hidden_dim)
 
-        # self.pos_encoder = PositionalEncoding(hidden_dim=self.hidden_dim, dropout=self.dropout)
+        self.pos_encoder = PositionalEncoding(hidden_dim=self.hidden_dim, dropout=self.dropout)
 
         self.charge_embedding = nn.Embedding(2,self.hidden_dim)
 
@@ -456,9 +456,9 @@ class Transformer(BaseEuclideangraphModel):
         """
         # Positional encodings
         pos_encodings = torch.cat([loc,vel], dim = 1).unsqueeze(2) # n_nodes*batch x 6 x 1
-        pos_encodings = self.coord_embedding(pos_encodings) #+ self.coord_embedding(pos_encodings)# n_nodes*batch x 6 x hidden_dim
+        pos_encodings = self.coord_embedding(pos_encodings) + self.coord_embedding(pos_encodings)# n_nodes*batch x 6 x hidden_dim
 
-        # pos_encodings = self.pos_encoder(pos_encodings) #+ self.coord_embedding(pos_encodings)# n_nodes*batch x 6 x hidden_dim
+        pos_encodings = self.pos_encoder(pos_encodings) #+ self.coord_embedding(pos_encodings)# n_nodes*batch x 6 x hidden_dim
         # Charge embeddings
         charges[charges == -1] = 0 # to work with nn.Embedding
         charges = charges.long()
