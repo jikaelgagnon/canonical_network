@@ -60,11 +60,3 @@ This project extends the work of **Sékou-Oumar Kaba, Arnab Kumar Mondal, Yan Zh
 - [Original code repository](https://github.com/oumarkaba/canonical_network)
 
 The illustrative animation above is credited to [Alex Brinson](https://alexjbrinson.github.io/nBodySim/).
-
----
-
-<div align="center">
-  <a href="https://jikaelgagnon.github.io/">Portfolio</a>
-  &nbsp;·&nbsp;
-  <a href="https://github.com/jikaelgagnon">GitHub</a>
-</div>
