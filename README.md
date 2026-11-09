@@ -35,12 +35,6 @@ How can a neural network recognize the same underlying structure when its input 
 
 This repository builds on [Kaba et al.’s implementation](https://github.com/oumarkaba/canonical_network) of [*Equivariance with Learned Canonicalization Functions*](https://arxiv.org/abs/2211.06489).
 
-## My contributions
-
-- **Transformer implementation** — added a Transformer architecture to extend the existing implementation.
-- **Function documentation** — expanded documentation to make the code easier to understand and navigate.
-- **Bug fixes** — addressed issues in the existing code.
-
 ## Explore the code
 
 | Area | Location |
